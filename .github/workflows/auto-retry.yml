@@ -1,19 +1,21 @@
-name: Auto Retry Failed
+name: Auto Retry All (Failed + Cancelled)
 on:
   schedule:
-    - cron: '*/15 * * * *' # Tự động quét mỗi 15 phút
-  workflow_dispatch: # Cho phép bấm chạy thủ công
+    - cron: '*/15 * * * *' # Quét mỗi 15 phút
+  workflow_dispatch: # Cho phép bấm chạy tay
 
 jobs:
-  rerun-failures:
+  rerun-all-bad-runs:
     runs-on: ubuntu-latest
     permissions:
       actions: write
     steps:
-      - name: Quét và chạy lại lỗi
+      - name: Chạy lại cả Lỗi và Hủy
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          # Tìm các lần chạy bị lỗi (failure) gần đây và chạy lại (rerun)
+          # 1. Tìm và chạy lại các file Lỗi (Màu đỏ)
           gh run list --status failure --limit 20 --json databaseId --jq '.[].databaseId' | xargs -I {} gh run rerun {} --failed
-
+          
+          # 2. Tìm và chạy lại các file Bị hủy (Màu xám)
+          gh run list --status cancelled --limit 20 --json databaseId --jq '.[].databaseId' | xargs -I {} gh run rerun {}
